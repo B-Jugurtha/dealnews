@@ -7,6 +7,8 @@ import { useQuery } from '@tanstack/react-query';
 
 type Props = {};
 
+// #F04F2D
+// #013953
 export const Home = (props: Props) => {
 	const [slides, setPosition] = useState(['', '', '', '', '']);
 	const [nbrProductLoad, setNbrProductLoad] = useState(10);
@@ -23,6 +25,8 @@ export const Home = (props: Props) => {
 	const [description, setDescription] = useState('');
 	const [selectedProduct, setSelectedProduct] = useState<Product | null>();
 	const [orderIsLoading, setOrderIsLoading] = useState(false);
+	const [staffPickTranslate, setStaffPickTranslate] = useState(0);
+	const [isFiltring, setIsFiltring] = useState(false);
 	const [errors, setErrors] = useState({
 		fullname: false,
 		phone: false,
@@ -39,8 +43,8 @@ export const Home = (props: Props) => {
 		queryKey: ['repoData'],
 		queryFn: () => fetch(`${process.env.REACT_APP_API_URL}products/get-categories`).then((res) => res.json()),
 	});
-	const productFilter = (stafPick: boolean, category: string, store: string, brand: string) => {
-		setProductsPage(1);
+	const productFilter = (stafPick: boolean, category: string, store: string, brand: string, productPage: number) => {
+		setProductsPage(productPage);
 		let param = '';
 		if (stafPick) {
 			param += '&staff_pick=true';
@@ -51,29 +55,40 @@ export const Home = (props: Props) => {
 		if (store) {
 			param += `&original_store=${store}`;
 		}
-		if (stafPick || category || store || brand) {
-			fetch(`${process.env.REACT_APP_API_URL}products/?ordering=-time_added${param}`)
-				.then((res) => res.json())
-				.then((newProducts) => {
-					if (newProducts.results) {
-						setProducts([...newProducts.results]);
-						setProductsPage(productsPage + 1);
-					} else {
-						setProductsPage(0);
-					}
-				});
-		} else {
-			fetch(`${process.env.REACT_APP_API_URL}products/?ordering=-time_added&page=1`)
-				.then((res) => res.json())
-				.then((newProducts) => {
-					if (newProducts.results) {
-						setProducts([...newProducts.results]);
-						setProductsPage(productsPage + 1);
-					} else {
-						setProductsPage(0);
-					}
-				});
-		}
+		fetch(`${process.env.REACT_APP_API_URL}products/?ordering=-time_added${param}&page=${productPage}`)
+			.then((res) => res.json())
+			.then((newProducts) => {
+				if (newProducts.results) {
+					console.log(newProducts.results);
+					setProducts([...newProducts.results]);
+					setProductsPage(productsPage + 1);
+				} else {
+					setProductsPage(0);
+				}
+			});
+		// if (stafPick || category || store || brand) {
+		// 	fetch(`${process.env.REACT_APP_API_URL}products/?ordering=-time_added${param}&page=${productPage}`)
+		// 		.then((res) => res.json())
+		// 		.then((newProducts) => {
+		// 			if (newProducts.results) {
+		// 				setProducts([...newProducts.results]);
+		// 				setProductsPage(productsPage + 1);
+		// 			} else {
+		// 				setProductsPage(0);
+		// 			}
+		// 		});
+		// } else {
+		// 	fetch(`${process.env.REACT_APP_API_URL}products/?ordering=-time_added&page=1`)
+		// 		.then((res) => res.json())
+		// 		.then((newProducts) => {
+		// 			if (newProducts.results) {
+		// 				setProducts([...newProducts.results]);
+		// 				setProductsPage(productsPage + 1);
+		// 			} else {
+		// 				setProductsPage(0);
+		// 			}
+		// 		});
+		// }
 	};
 
 	useEffect(() => {
@@ -152,69 +167,37 @@ export const Home = (props: Props) => {
 			<div className='p-4 flex justify-center'>
 				<img src={require('../assets/img/top_banner.webp')} alt='Top Ad' />
 			</div>
-			{/* <div className='carousel-wrapper'>
-				<Carousel autoPlay infiniteLoop>
-					<div className='flex gap-4 p-2'>
-						<div className='rounded-md shadow-md shadow-[#1212124a] w-[160px]'>
-							<div>
-								<img src={require('../assets/img/placeholder.webp')} alt='product' />
-							</div>
-							<div className='pb-0 p-2 '>
-								<div className='text-xs font-light text-[#7f8387] my-1'>Sam's Club</div>
-								<div className='text-sm font-medium line-clamp-3 h-16'>Sam's Club Clearance Sam's Club Clearance Sam's Club Clearance qsdqs </div>
-								<button className='text-[#00a863] font-semibold text-lg'>Shop Now</button>
-							</div>
-							<div>
-								<span>Details &gt;</span>
-							</div>
-						</div>
-						<div className='rounded-md shadow-md shadow-[#1212124a] w-[160px]'>
-							<div>
-								<img src={require('../assets/img/placeholder.webp')} alt='product' />
-							</div>
-							<div className='pb-0 p-2 '>
-								<div className='text-xs font-light text-[#7f8387] my-1'>Sam's Club</div>
-								<div className='text-sm font-medium line-clamp-3 h-16'>Sam's Club Clearance</div>
-								<button className='text-[#00a863] font-semibold text-lg'>Shop Now</button>
-							</div>
-							<div className='flex '>
-								<span className='flex-1'></span>
-								<span className='text-[.9em] p-2 font-semibold text-[#214b82]'>Details &gt;</span>
-							</div>
-						</div>
-					</div>
-					<div></div>
-				</Carousel>
-			</div> */}
-			<div className=' flex'>
-				<div className='basis-4/5'>
+			<div className=' flex w-full gap-8'>
+				<div className='md:w-9/12 w-full'>
 					<div className='w-full'>
-						<div className='border-2 p-2 w-fit'>
+						<div className='border-2 p-2 m-2 w-fit'>
 							<span className='font-bold text-gray-800'>Filtres:</span>
 							<div className='flex gap-8 items-center justify-center pt-2'>
 								<span
 									onClick={() => {
-										productFilter(!isStaffPick, selectedCat, selectedStore, '');
+										setIsFiltring(true);
+										productFilter(!isStaffPick, selectedCat, selectedStore, '', 1);
 										setIsStaffPick(!isStaffPick);
 									}}
-									className={isStaffPick ? 'border-2 rounded-xl p-1 text-xs hover:cursor-pointer border-blue-300 bg-blue-100' : 'border-2 rounded-xl p-1 text-xs hover:cursor-pointer'}>
+									className={isStaffPick ? 'border-2 rounded-md p-2 text-xs hover:cursor-pointer border-blue-300 bg-blue-100' : 'border-2 rounded-xl p-2 text-xs hover:cursor-pointer'}>
 									Choix de l' équipe
 								</span>
 								<div className='relative group'>
 									{selectedCat ? (
-										<span className='max-w-[140px] truncate border-2 rounded-xl p-1 text-sm hover:border-blue-300 hover:bg-blue-100 hover:cursor-pointer'>{selectedCat}</span>
+										<span className='max-w-[140px] truncate border-2 rounded-md p-2 text-sm hover:border-blue-300 hover:bg-blue-100 hover:cursor-pointer'>{selectedCat}</span>
 									) : (
-										<span className='max-w-[140px] truncate border-2 rounded-xl p-1 text-sm hover:border-blue-300 hover:bg-blue-100 hover:cursor-pointer'>Catégorie</span>
+										<span className='max-w-[140px] truncate border-2 rounded-md p-2 text-sm hover:border-blue-300 hover:bg-blue-100 hover:cursor-pointer'>Catégorie</span>
 									)}
-									<ul className='absolute bg-white p-2 group-hover:block hidden border-2 top-7 rounded-lg'>
+									<ul className='absolute z-40 bg-white p-2 group-hover:block hover:block hidden group-hover:border-2 top-[24px] rounded-lg'>
 										{categories?.map((cat, i) => {
 											return (
 												<li
 													key={i}
-													className='p-1 hover:cursor-pointer hover:bg-blue-100'
+													className='p-1 hover:cursor-pointer hover:bg-blue-100 hidden group-hover:block hover:block'
 													onClick={() => {
 														setSelectedCat(cat.categorie_name);
-														productFilter(isStaffPick, cat.categorie_name, selectedStore, '');
+														setIsFiltring(true);
+														productFilter(isStaffPick, cat.categorie_name, selectedStore, '', 1);
 													}}>
 													{cat.categorie_name}
 												</li>
@@ -224,11 +207,11 @@ export const Home = (props: Props) => {
 								</div>
 								<div className='relative group'>
 									{selectedStore ? (
-										<span className='max-w-[140px] truncate border-2 rounded-xl p-1 text-sm hover:border-blue-300 hover:bg-blue-100 hover:cursor-pointer'>{selectedStore}</span>
+										<span className='max-w-[140px] truncate border-2 rounded-md p-2 text-sm hover:border-blue-300 hover:bg-blue-200 hover:cursor-pointer'>{selectedStore}</span>
 									) : (
-										<span className='max-w-[140px] truncate border-2 rounded-xl p-1 text-sm hover:border-blue-300 hover:bg-blue-100 hover:cursor-pointer'>Store</span>
+										<span className='max-w-[140px] truncate border-2 rounded-md p-2 text-sm hover:border-blue-300 hover:bg-blue-100 hover:cursor-pointer'>Store</span>
 									)}
-									<ul className='absolute bg-white p-2 group-hover:block hidden border-2 top-7 rounded-lg'>
+									<ul className='absolute z-40 bg-white p-2 group-hover:block hidden border-2 top-7 rounded-lg'>
 										{stores?.map((store, i) => {
 											return (
 												<li
@@ -236,7 +219,8 @@ export const Home = (props: Props) => {
 													className='p-1 hover:cursor-pointer hover:bg-blue-100'
 													onClick={() => {
 														setSelectedStore(store.original_store);
-														productFilter(isStaffPick, selectedCat, store.original_store, '');
+														setIsFiltring(true);
+														productFilter(isStaffPick, selectedCat, store.original_store, '', 1);
 													}}>
 													{store.original_store}
 												</li>
@@ -244,39 +228,69 @@ export const Home = (props: Props) => {
 										})}
 									</ul>
 								</div>
+								<button
+									className='border-2 rounded-xl p-2 text-xs hover:cursor-pointer hover:border-blue-300 hover:bg-blue-100 '
+									onClick={() => {
+										setIsStaffPick(false);
+										setSelectedCat('');
+										setSelectedStore('');
+										productFilter(false, '', '', '', 1);
+									}}>
+									Reinitialiser
+								</button>
 							</div>
 						</div>
 					</div>
-					<div className='flex gap-4 p-2 flex-wrap'>
-						{staffProducts.map((e, i) => {
-							return (
-								<div className='rounded-md shadow-md shadow-[#1212124a] w-[160px]' key={i}>
-									<div>
-										<img src={e.photo} alt='product' className='w-[160px] h-[160px]' />
+					<div className='overflow-hidden relative p-2'>
+						<div className='flex gap-4 p-2 flex-nowrap ' style={{ transform: `translateX(${staffPickTranslate}px)` }}>
+							{staffProducts.map((e, i) => {
+								return (
+									<div className='rounded-md shadow-md shadow-[#1212124a] w-[160px] min-w-[160px]' key={i}>
+										<div>
+											<img src={require('../assets/img/placeholder.webp')} alt='product' className='w-[160px] h-[160px]' />
+										</div>
+										<div className='pb-0 p-2 '>
+											<div className='text-xs font-light text-[#7f8387] my-1'>{e.original_store}</div>
+											<div className='text-sm font-medium line-clamp-3 h-16'>{e.full_name}</div>
+											<button className='text-[#00a863] font-semibold text-lg'>Commander</button>
+										</div>
+										<div className='flex '>
+											<span className='flex-1'></span>
+											<span className='text-[.9em] p-2 font-semibold text-[#214b82]'>Détails &gt;</span>
+										</div>
 									</div>
-									<div className='pb-0 p-2 '>
-										<div className='text-xs font-light text-[#7f8387] my-1'>{e.original_store}</div>
-										<div className='text-sm font-medium line-clamp-3 h-16'>{e.full_name}</div>
-										<button className='text-[#00a863] font-semibold text-lg'>Commander</button>
-									</div>
-									<div className='flex '>
-										<span className='flex-1'></span>
-										<span className='text-[.9em] p-2 font-semibold text-[#214b82]'>Détails &gt;</span>
-									</div>
-								</div>
-							);
-						})}
+								);
+							})}
+						</div>
+						<button
+							className='p-4 bg-green-500 text-white text-center absolute top-1/2 left-0'
+							onClick={() => {
+								setStaffPickTranslate(staffPickTranslate - 160);
+							}}>
+							+
+						</button>
+						<button
+							className='p-4 bg-green-500 text-white text-center absolute top-1/2 right-0'
+							onClick={() => {
+								setStaffPickTranslate(staffPickTranslate + 160);
+							}}>
+							-
+						</button>
 					</div>
 					<div>
 						{products.map((e, i) => {
 							return (
-								<div className='border-2 rounded-xl flex my-4' key={i}>
-									<span className='flex items-center p-2'>
-										<img className='w-[135px] h-[135px]' src={e.photo} alt='product' />
-									</span>
+								<div className='border-2 rounded-xl flex my-4 flex-col sm:flex-row m-8' key={i}>
+									<div className='flex items-center justify-center p-2'>
+										<img className='w-[300px] h-[300px] sm:w-[135px] sm:h-[135px]' src={require('../assets/img/placeholder.webp')} alt='product' />
+									</div>
 									<div className='flex-1 flex flex-col ml-2'>
 										<span className='text-[#7f8387] text-xs py-1 capitalize'>{e.original_store}</span>
-										<span className='font-bold'>{e.full_name}</span>
+										<span className='font-bold'>
+											<a className='hover:cursor-pointer' href={e.original_link} target='_blank' rel='noreferrer'>
+												{e.full_name}
+											</a>
+										</span>
 										<span className='py-4 font-bold text-lg text-[#00a863]'>{e.price} DZD</span>
 										{e.description ? (
 											<div>
@@ -325,16 +339,20 @@ export const Home = (props: Props) => {
 								<button
 									className='text-center font-bold hover:cursor-pointer text-[#214b82]'
 									onClick={() => {
-										fetch(`${process.env.REACT_APP_API_URL}products/?ordering=-time_added&page=${productsPage}`)
-											.then((res) => res.json())
-											.then((newProducts) => {
-												if (newProducts.results) {
-													setProducts([...products, ...newProducts.results]);
-													setProductsPage(productsPage + 1);
-												} else {
-													setProductsPage(0);
-												}
-											});
+										if (!isFiltring) {
+											fetch(`${process.env.REACT_APP_API_URL}products/?ordering=-time_added&page=${productsPage}`)
+												.then((res) => res.json())
+												.then((newProducts) => {
+													if (newProducts.results) {
+														setProducts([...products, ...newProducts.results]);
+														setProductsPage(productsPage + 1);
+													} else {
+														setProductsPage(0);
+													}
+												});
+										} else {
+											productFilter(isStaffPick, selectedCat, selectedStore, '', productsPage);
+										}
 									}}>
 									Show More
 								</button>
@@ -344,15 +362,15 @@ export const Home = (props: Props) => {
 						</div>
 					</div>
 				</div>
-				<div className='basis-1/5 flex flex-col sm:hidden '>
+				<div className='w-3/12 flex-col items-center justify-center hidden md:block'>
 					{Array(10)
 						.fill('')
 						.map((e, i) => {
 							return (
-								<div className='flex flex-col mb-6 p-2 hover:cursor-pointer' key={i}>
-									<span className='truncate capitalize font-bold text-lg text-[#214b82]'>This is a Title For Testing purpoces</span>
+								<div className='flex flex-col mb-6 p-2 hover:cursor-pointer w-full items-center justify-center max-w-[300px]' key={i}>
+									{/* <div className='truncate capitalize md:font-bold text-[#214b82] text-sm font-medium md:text-lg '>This is a Title For Testing purpoces</div> */}
 									<div>
-										<img src={require('../assets/img/ad.jpg')} alt='Ad' />
+										<img className='' src={require('../assets/img/ad.jpg')} alt='Ad' />
 									</div>
 								</div>
 							);
@@ -457,7 +475,7 @@ export const Home = (props: Props) => {
 						<h2 className='font-bold text-lg p-2'>Produit:</h2>
 						<div className='flex flex-col items-center text-left'>
 							<div className='p-2 max-w-[220px]'>
-								<img src={selectedProduct?.photo} alt='Ad' />
+								<img src={require('../assets/img/placeholder.webp')} alt='Ad' />
 							</div>
 							<div className='p-2 '>
 								<label htmlFor='fullname' className='p-1 text-xs font-bold'>
